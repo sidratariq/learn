@@ -1,0 +1,15 @@
+{
+"peers": ["peer0.org-mtbc","peer0.org-uni"],
+"fcn":"RegisterProvider",
+"args":["1","myehr","urll","hammad","sanaullah","dentist"],
+"purpose":"Invoke",
+"peer":"peer0.org-mtbc"
+}
+
+{
+"peers": ["peer0.org-mtbc","peer0.org-uni"],
+"fcn":"GetProviderById",
+"args":”1”,
+"purpose":"Query",
+"peer":"peer0.org-mtbc"
+}
