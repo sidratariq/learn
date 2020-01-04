@@ -1,0 +1,110 @@
+
+func (u *User) UpdateProviderAccess(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	// for searching provider object
+	Firstname := strings.ToLower(args[0])
+	Lastname := strings.ToLower(args[1])
+	Speciality := strings.ToLower(args[2])
+
+	queryString := fmt.Sprintf("{\"selector\":{\"firstname\":\"%s\",\"lastname\":\"%s\",\"speciality\":\"%s\"}}", Firstname, Lastname, Speciality)
+
+	// queryString := fmt.Sprintf("{\"selector\":{\"ObjectType\":\"Patient\",\"_id\":\"%s\"}}", id)
+
+	queryResults, err := getQueryResultForQueryString(stub, queryString)
+
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var tempArray []entity.ProviderUnmarshal
+	err = json.Unmarshal(queryResults, &tempArray)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var key string
+	for _, temp := range tempArray {
+
+		key = temp.Key
+
+	}
+
+	userrole, err := getAttribute(stub, "userrole")
+	if err != nil {
+		return shim.Error("Fails to get userrole " + err.Error())
+	}
+
+	//Get Current Patient based on token
+	patientId, err := getAttribute(stub, "id") //Get the current patient ID from identity.
+	if err != nil {
+		return shim.Error("Fails to get id " + err.Error())
+	}
+
+	//Only allow when the user is a patient.
+	if userrole == "Patient" {
+
+		patientAsByte, err := stub.GetState(patientId) //Get the patient's details from the state.
+		if err != nil {
+			return shim.Error("Fails to get patient: " + err.Error())
+		}
+
+		var patient entity.Patient
+		err = json.Unmarshal(patientAsByte, &patient) //Store the Patient's object into patient.
+
+		if err != nil {
+			return shim.Error("Fails to unmarshal patient " + err.Error())
+		}
+
+		//Get Provider
+		var provider entity.Provider
+		providerAsByte, err := stub.GetState(key)
+		err = json.Unmarshal(providerAsByte, &provider)
+
+		if err != nil {
+			return shim.Error("Fails to unmarshal provider " + err.Error())
+		}
+
+		a := 0
+		//Search in patient's providerconsent list that if the current provider is allowed to access the patient's data.
+		for i := 0; i < len(patient.ProviderConsent); i++ {
+			tempConsent := patient.ProviderConsent[i].Provider.ProviderId
+			if tempConsent == provider.ProviderId {
+				patient.ProviderConsent[i].StartTime = time.Now().Format("01-02-2006")
+				patient.ProviderConsent[i].EndTime = time.Now().AddDate(2, 0, 0).Format("01-02-2006")
+				a = 1
+			}
+		}
+
+		if a != 1 {
+			return shim.Error("Provider's Consent is not registered")
+		}
+
+		//Marshal the object into json format
+		patientJSONasBytes, err := json.Marshal(patient)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		//Save the object into state replacing the old one
+		err = stub.PutState(patientId, patientJSONasBytes)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		return shim.Success(nil)
+
+	}
+	return shim.Error("Unauthorized! Only Patient can Update Provider Access!")
+
+}
+
+func (u *User) RevokeProviderAccess(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+		
+	return shim.Error("Unauthorized! Only Patient can Update Provider Access!")
+	
+}
