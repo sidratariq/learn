@@ -1,0 +1,76 @@
+package main
+
+import (
+	implementation "Implementation"
+	inf "Interfaces"
+	"fmt"
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	pb "github.com/hyperledger/fabric/protos/peer"
+)
+
+// SimpleChaincode example simple Chaincode implementation
+type SimpleChaincode struct {
+}
+
+// ===================================================================================
+// Main
+// ===================================================================================
+func main() {
+	err := shim.Start(new(SimpleChaincode))
+	if err != nil {
+		fmt.Printf("Error starting Simple chaincode: %s", err)
+	}
+}
+
+// Init initializes chaincode
+// ===========================
+func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	return shim.Success(nil)
+}
+
+// ========================================
+// Invoke - Our entry point for Invocations
+// ========================================
+func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+	function, args := stub.GetFunctionAndParameters()
+	fmt.Println("invoke is running " + function)
+	u := &implementation.User{}
+	// Handle different functions
+	if function == "RegisterPatient" {
+		return inf.InterfacePatient.RegisterPatient(u, stub, args)
+	} else if function == "GetPatientBySSN" {
+		return inf.InterfacePatient.GetPatientBySSN(u, stub, args)
+	} else if function == "GetPatientByInformation" {
+		return inf.InterfacePatient.GetPatientByInformation(u, stub, args)
+	} else if function == "GetPatientById" {
+		return inf.InterfacePatient.GetPatientById(u, stub, args)
+	} else if function == "GetPatientByFirstName" {
+		return inf.InterfacePatient.GetPatientByFirstName(u, stub, args)
+	} else if function == "GetPatientByLastName" {
+		return inf.InterfacePatient.GetPatientByLastName(u, stub, args)
+	} else if function == "UpdatePatientById" {
+		return inf.InterfacePatient.UpdatePatientById(u, stub, args)
+	} else if function == "UpdateProviderAccess" {
+		return inf.InterfacePatient.UpdateProviderAccess(u, stub, args)
+	} else if function == "AllowConsent" {
+		return inf.InterfacePatient.AllowConsent(u, stub, args) //////////////////Patient opertion till here/////////////////////
+	} else if function == "RevokeProviderAccess" {
+		return inf.InterfacePatient.RevokeProviderAccess(u, stub, args)
+	} else if function == "RegisterProvider" {
+		return inf.InterfaceProvider.RegisterProvider(u, stub, args)
+	} else if function == "GetProviderById" {
+		return inf.InterfaceProvider.GetProviderById(u, stub, args)
+	} else if function == "UpdateProviderById" {
+		return inf.InterfaceProvider.UpdateProviderById(u, stub, args)
+	} else if function == "GetProviderByFirstName" {
+		return inf.InterfaceProvider.GetProviderByFirstName(u, stub, args)
+	} else if function == "GetProviderByLastName" {
+		return inf.InterfaceProvider.GetProviderByLastName(u, stub, args)
+	} 
+	
+	fmt.Println("invoke did not find func: " + function) //error
+    return shim.Error("Received unknown function invocation")
+
+
+
+}
